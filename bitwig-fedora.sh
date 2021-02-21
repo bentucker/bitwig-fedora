@@ -6,24 +6,24 @@
 # USAGE: bitwig-fedora.sh [-i|-u] [-h]
 #
 # DESCRIPTION: This script automates the Bitwig Studio installation process on
-# Fedora 28.
+# Fedora 33.
 # The default starting directory is the current directory.
 # Do not descend directories on other filesystems.
 #
 # OPTIONS: See function - usage - below.
-# REQUIREMENTS: Fedora 28 Workstation, Bitwig Studio 2.4
+# REQUIREMENTS: Fedora 33 Workstation, Bitwig Studio 3.3.3
 # NOTES: ---
 #=============================================================================
 
 ROOT_UID=0
 E_NOTROOT=87
-VERSION=2.4
+VERSION=3.3.3
 DEFAULT_FILENAME="bitwig-studio-$VERSION.deb"
 DEFAULT_URL="https://downloads.bitwig.com/stable/$VERSION/$DEFAULT_FILENAME"
 INSTALL_LOG="/opt/bitwig-studio/.$DEFAULT_FILENAME.log"
 SAFE_FILE_REMOVE="^/\./usr/share/*|^/\./opt/bitwig-studio/*"
-SHA256="849c5c74902421f1c901be1d0216be8909d488bbdaeec2f5c56cc8c5b94048d9"
-OS_VERSION="Fedora release 28 (Twenty Eight)"
+SHA256="3439061c90ebe9308712181228aee32d89394631848fcfa50d8678cb0bc6db48"
+OS_VERSION="Fedora release 33 (Thirty Three)"
 
 
 #=== FUNCTION ================================================================
@@ -99,6 +99,26 @@ function create_symbolic_links()
 {
   echo "Creating symbolic links."
   ln -s /usr/lib64/libbz2.so.1 /usr/lib64/libbz2.so.1.0
+
+  cat <<EOF > /usr/bin/bitwig-studio
+#!/bin/bash
+
+java -cp /opt/bitwig-studio/bin/BitwigStudio \
+ -Djava.library.path=/opt/bitwig-studio/lib/bitwig-studio \
+ -Djava.class.path=/opt/bitwig-studio/bin/bitwig.jar:/opt/bitwig-studio/bin/libs.jar:/opt/bitwig-studio/bin/lwjgl.jar \
+ -Xms200m -Xmx2048m -Djava.io.tmpdir=/tmp/bitwig-${SUDO_USER} \
+ -DeulaPath=/opt/bitwig-studio/EULA.txt \
+ -DengineExecutable=/opt/bitwig-studio/bin/BitwigStudioEngine \
+ -DfactoryLibrary=/opt/bitwig-studio/Library \
+ -DresourceLocation=/opt/bitwig-studio/resources -DexecutableDir=/opt/bitwig-studio/bin32 \
+ -DexecutableDir64=/opt/bitwig-studio/bin \
+ -Dshow-file-dialog-command=/opt/bitwig-studio/bin/show-file-dialog-gtk3 \
+ -DsplashPid=305764 -Dnitro.include=/opt/bitwig-studio/resources/nitro/std \
+ -Djava.awt.headless=true -XX:ErrorFile=./bitwig-studio-jvm-crash.log \
+ -XX:-UseLoopPredicate com.bitwig.flt.app.BitwigStudioMain
+EOF
+ 
+ chmod +x /usr/bin/bitwig-studio
 }
 
 
